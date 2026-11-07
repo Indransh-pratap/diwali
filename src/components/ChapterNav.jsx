@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Home, Sparkles, BookHeart, Stars, Camera, Heart } from 'lucide-react'
+import { Home, Sparkles, BookHeart, Stars, Camera, Heart, Swords, Moon } from 'lucide-react'
 import { triggerHaptic } from '../utils/haptics'
 
 const navItems = [
@@ -9,6 +9,8 @@ const navItems = [
   { id: 'story', label: 'Story', icon: BookHeart },
   { id: 'sky', label: 'Sky', icon: Stars },
   { id: 'gallery', label: 'Memories', icon: Camera },
+  { id: 'love-war', label: 'Love War', icon: Swords },
+  { id: 'shaam', label: 'Diwali Shaam ✨', icon: Moon },
   { id: 'finale', label: 'Forever', icon: Heart },
 ]
 

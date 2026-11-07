@@ -9,6 +9,8 @@ import InteractiveDiyas from './components/InteractiveDiyas'
 import OurStoryTimeline from './components/OurStoryTimeline'
 import InteractiveSky from './components/InteractiveSky'
 import Gallery from './components/Gallery'
+import LoveWar from './components/LoveWar/LoveWar'
+import DiwaliShaam from './components/DiwaliShaam/DiwaliShaam'
 import Finale from './components/Finale'
 import MusicPlayer from './components/MusicPlayer'
 
@@ -71,7 +73,13 @@ export default function App() {
               onSelectIdx={setSelectedGalleryPhoto}
             />
 
-            {/* 6. Final Surprise - The Emotional Highlight */}
+            {/* 6. Radha vs Indransh — The Diwali Love War ❤️ */}
+            <LoveWar />
+
+            {/* 7. The Diwali Shaam — Just You, Me & A Million Lights ✨ */}
+            <DiwaliShaam />
+
+            {/* 8. Final Surprise - The Emotional Highlight */}
             <Finale />
           </main>
         </>
