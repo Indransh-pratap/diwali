@@ -687,23 +687,6 @@ io.on('connection', (socket) => {
 
     damageObstacle(room, obstacleId, damage)
   })
-    room.coopScore += 25
-
-    if (room.obstacles[obsIndex].hp <= 0) {
-      room.obstacles.splice(obsIndex, 1)
-      room.waveKills += 1
-
-      io.to(room.code).emit('obstacle_destroyed', {
-        obstacleId,
-        score: room.coopScore,
-        waveKills: room.waveKills
-      })
-
-      if (room.waveKills >= room.waveTargetKills) {
-        advanceCoopWave(room)
-      }
-    }
-  })
 
   function advanceCoopWave(room) {
     if (room.currentWave < room.totalWaves) {

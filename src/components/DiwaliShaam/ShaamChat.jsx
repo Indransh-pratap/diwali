@@ -25,12 +25,17 @@ export default function ShaamChat({
   const [inputText, setInputText] = useState('')
   const [showEmojiPickerFor, setShowEmojiPickerFor] = useState(null)
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const messagesEndRef = useRef(null)
+  const chatContainerRef = useRef(null)
   const typingTimeoutRef = useRef(null)
 
-  // Auto-scroll to bottom of chat
+  // Auto-scroll to bottom of chat container ONLY (does NOT scroll the window/page)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (chatContainerRef.current && (messages.length > 0 || partnerTyping)) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      })
+    }
   }, [messages, partnerTyping])
 
   const handleInputChange = (e) => {
@@ -124,7 +129,10 @@ export default function ShaamChat({
             </div>
 
             {/* 3. Messages Stream */}
-            <div className="p-4 sm:p-5 h-[230px] sm:h-[260px] overflow-y-auto no-scrollbar flex flex-col gap-3.5">
+            <div
+              ref={chatContainerRef}
+              className="p-4 sm:p-5 h-[230px] sm:h-[260px] overflow-y-auto no-scrollbar flex flex-col gap-3.5"
+            >
               {messages.length === 0 ? (
                 <div className="my-auto text-center flex flex-col items-center">
                   <div className="p-3 rounded-full bg-[#f29bb2]/15 text-[#f29bb2] mb-2 animate-pulse">
@@ -256,7 +264,6 @@ export default function ShaamChat({
                 </motion.div>
               )}
 
-              <div ref={messagesEndRef} />
             </div>
 
             {/* 4. Input & Send Bar */}

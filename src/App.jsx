@@ -18,15 +18,26 @@ export default function App() {
   const [opened, setOpened] = useState(false)
   const [selectedGalleryPhoto, setSelectedGalleryPhoto] = useState(null)
 
-  // Prevent scroll when initial intro overlay is active
+  // Ensure page always starts at top (Home) and disable automatic browser scroll restoration
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual'
+    }
+    window.scrollTo(0, 0)
+  }, [])
+
+  // Prevent scroll when initial intro overlay is active and ensure scroll is at top upon opening
   useEffect(() => {
     document.body.style.overflow = opened ? '' : 'hidden'
+    if (opened) {
+      window.scrollTo(0, 0)
+    }
   }, [opened])
 
   const handleOpen = () => {
     window.dispatchEvent(new CustomEvent('request-music-play'))
     setOpened(true)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    window.scrollTo(0, 0)
   }
 
   return (
