@@ -18,6 +18,8 @@ html {
   background-color: var(--color-midnight);
   color: var(--color-cream);
   overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 body {
@@ -41,6 +43,15 @@ body {
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(to bottom, #d4af37, #7c2448);
   border-radius: 9999px;
+}
+
+/* Hide scrollbar for compact mobile horizontal scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Ambient Pulse Overlay */

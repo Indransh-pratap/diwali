@@ -3,27 +3,34 @@ import { motion } from 'framer-motion'
 import { Sparkles, Heart, ChevronDown } from 'lucide-react'
 import Fireworks from './Fireworks'
 import SurpriseModal from './SurpriseModal'
+import { triggerHaptic } from '../utils/haptics'
 
 export default function Hero() {
   const [surpriseOpen, setSurpriseOpen] = useState(false)
 
   const handleEnterUniverse = () => {
+    triggerHaptic(25)
     const el = document.getElementById('diyas')
     if (el) el.scrollIntoView({ behavior: 'smooth' })
   }
 
+  const handleOpenSurprise = () => {
+    triggerHaptic(30)
+    setSurpriseOpen(true)
+  }
+
   return (
-    <section id="hero" className="relative w-full h-[100dvh] flex flex-col justify-between items-center text-center px-4 pt-[calc(env(safe-area-inset-top,0px)+4.8rem)] pb-[calc(env(safe-area-inset-bottom,0px)+1.5rem)] overflow-hidden z-10 box-border">
+    <section id="hero" className="relative w-full min-h-[100dvh] flex flex-col justify-between items-center text-center px-4 pt-[calc(env(safe-area-inset-top,0px)+5.5rem)] pb-[calc(env(safe-area-inset-bottom,0px)+2rem)] overflow-hidden z-10 box-border">
       {/* Background fireworks (subtle, corner-biased) */}
       <Fireworks rate={3200} className="z-0 opacity-45 pointer-events-none" />
 
       {/* Glowing Moon with Soft Floating Clouds */}
-      <div className="absolute top-[8%] right-[8%] sm:right-[15%] w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-[radial-gradient(circle_at_35%_35%,#fffbf0_0%,#f5e4be_45%,#d4af37_85%,transparent_100%)] shadow-[0_0_50px_rgba(245,228,190,0.45)] pointer-events-none -z-10 animate-float-slow">
+      <div className="absolute top-[6%] right-[6%] sm:right-[15%] w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-[radial-gradient(circle_at_35%_35%,#fffbf0_0%,#f5e4be_45%,#d4af37_85%,transparent_100%)] shadow-[0_0_50px_rgba(245,228,190,0.45)] pointer-events-none -z-10 animate-float-slow">
         <div className="absolute -bottom-2 -left-4 w-28 sm:w-36 h-6 rounded-full bg-[#18092e]/60 blur-md pointer-events-none" />
       </div>
 
       {/* Clean Palace Silhouette along bottom */}
-      <div className="absolute bottom-0 inset-x-0 h-36 sm:h-48 pointer-events-none -z-10 flex items-end justify-center overflow-hidden opacity-75">
+      <div className="absolute bottom-0 inset-x-0 h-32 sm:h-48 pointer-events-none -z-10 flex items-end justify-center overflow-hidden opacity-75">
         <svg
           viewBox="0 0 1200 320"
           className="w-full h-full object-cover object-bottom"
@@ -54,11 +61,11 @@ export default function Hero() {
         </svg>
       </div>
 
-      {/* Center Cinematic Content with Plentiful Breathing Space */}
-      <div className="relative my-auto flex flex-col items-center max-w-[92vw]">
-        {/* Single Main Heading (Clean, Calligraphic, No clutter) */}
+      {/* Center Content with Plentiful Breathing Space */}
+      <div className="relative my-auto flex flex-col items-center max-w-[94vw] w-full py-4">
+        {/* Single Main Heading */}
         <motion.h1
-          className="hero-script-heading my-3"
+          className="hero-script-heading my-3 sm:my-4"
           initial={{ opacity: 0, scale: 0.94 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.2, delay: 0.3 }}
@@ -68,7 +75,7 @@ export default function Hero() {
 
         {/* Short, Poetic Single Subtitle */}
         <motion.p
-          className="font-serif italic text-base sm:text-xl text-[#faf4ea]/85 max-w-[34ch] leading-relaxed mt-2"
+          className="font-serif italic text-base sm:text-xl text-[#faf4ea]/85 max-w-[36ch] leading-relaxed mt-2 sm:mt-3 px-2"
           style={{ textWrap: 'balance' }}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -78,23 +85,23 @@ export default function Hero() {
           Radha.......<span className="text-[#f5e4be] font-medium"></span>.
         </motion.p>
 
-        {/* Clean, Minimal Buttons */}
+        {/* Action Buttons - Stacked on mobile, row on tablet/desktop */}
         <motion.div
-          className="flex flex-wrap items-center justify-center gap-3.5 mt-8"
+          className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mt-6 sm:mt-8 w-full sm:w-auto px-4"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 1.2 }}
         >
           <button
             onClick={handleEnterUniverse}
-            className="btn-primary-luxury text-xs sm:text-sm px-6 py-2.5"
+            className="btn-primary-luxury text-xs sm:text-sm px-7 py-3 min-h-[46px] w-full sm:w-auto active:scale-95 touch-manipulation flex items-center justify-center gap-2"
           >
             <Sparkles size={15} /> Enter Our Universe
           </button>
 
           <button
-            onClick={() => setSurpriseOpen(true)}
-            className="btn-secondary-luxury text-xs sm:text-sm px-6 py-2.5"
+            onClick={handleOpenSurprise}
+            className="btn-secondary-luxury text-xs sm:text-sm px-7 py-3 min-h-[46px] w-full sm:w-auto active:scale-95 touch-manipulation flex items-center justify-center gap-2"
           >
             <Heart size={15} className="text-[#f29bb2]" fill="currentColor" /> A Little Surprise
           </button>
@@ -104,11 +111,11 @@ export default function Hero() {
       {/* Minimal Bottom Cue */}
       <motion.button
         onClick={handleEnterUniverse}
-        aria-label="Scroll down"
+        aria-label="Scroll down to diyas"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.8, duration: 0.8 }}
-        className="text-[#e6c887]/60 hover:text-[#f5e4be] transition mb-1"
+        className="text-[#e6c887]/60 hover:text-[#f5e4be] transition mb-2 p-2 active:scale-90 touch-manipulation cursor-pointer"
       >
         <ChevronDown size={22} className="animate-bounce" />
       </motion.button>

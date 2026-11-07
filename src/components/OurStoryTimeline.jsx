@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
-import { Heart, Image as ImageIcon } from 'lucide-react'
-import { storyTimeline, photos } from '../data'
+import { Heart, Sparkles } from 'lucide-react'
+import { photos } from '../data'
+import { triggerHaptic } from '../utils/haptics'
 
 export default function OurStoryTimeline({ onSelectPhoto }) {
   const shortStories = [
@@ -12,12 +13,17 @@ export default function OurStoryTimeline({ onSelectPhoto }) {
 
   const tilts = [-2, 2, -1.5, 2]
 
+  const handleClick = (idx) => {
+    triggerHaptic(25)
+    if (onSelectPhoto) onSelectPhoto(idx)
+  }
+
   return (
-    <section id="story" className="relative w-full py-28 px-4 overflow-hidden z-10">
+    <section id="story" className="relative w-full py-20 sm:py-28 px-3 sm:px-4 overflow-hidden z-10">
       <div className="max-w-4xl mx-auto flex flex-col items-center">
-        {/* Single Main Heading */}
+        {/* Main Heading */}
         <motion.h2
-          className="font-script gold-text-luxury text-5xl sm:text-7xl mb-16 text-center"
+          className="font-script gold-text-luxury text-4xl sm:text-6xl md:text-7xl mb-2 text-center"
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -25,8 +31,19 @@ export default function OurStoryTimeline({ onSelectPhoto }) {
           A Little Story Called Us
         </motion.h2>
 
+        {/* Mobile Interactive Hint */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="text-xs sm:text-sm font-sans text-[#f5e4be]/80 mb-12 text-center flex items-center justify-center gap-1.5"
+        >
+          <Sparkles size={14} className="text-[#e6c887]" />
+          <span>Tap any polaroid to open the memory</span>
+        </motion.p>
+
         {/* 4 Clean Visual Memory Cards with Minimal Text */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 sm:gap-14 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 sm:gap-14 w-full justify-items-center">
           {shortStories.map((item, idx) => {
             const photo = photos[idx] || photos[0]
 
@@ -36,14 +53,14 @@ export default function OurStoryTimeline({ onSelectPhoto }) {
                 initial={{ opacity: 0, y: 25 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: idx * 0.1 }}
+                transition={{ duration: 0.5, delay: idx * 0.08 }}
                 whileHover={{ y: -6, scale: 1.02 }}
-                onClick={() => onSelectPhoto && onSelectPhoto(idx)}
-                className="group cursor-pointer flex flex-col items-center"
+                onClick={() => handleClick(idx)}
+                className="group cursor-pointer flex flex-col items-center w-full max-w-[280px] select-none touch-manipulation active:scale-95 transition-transform"
               >
                 {/* Polaroid Frame */}
                 <div
-                  className="bg-[#fff8ef] p-3 pb-5 rounded shadow-[0_15px_40px_rgba(0,0,0,0.65)] transition-transform duration-300 w-full max-w-[280px]"
+                  className="bg-[#fff8ef] p-3 pb-5 rounded shadow-[0_15px_40px_rgba(0,0,0,0.65)] transition-transform duration-300 w-full"
                   style={{ transform: `rotate(${tilts[idx % tilts.length]}deg)` }}
                 >
                   <div className="relative aspect-square w-full bg-[#180728] rounded overflow-hidden flex flex-col items-center justify-center text-[#e6c887]">
@@ -51,7 +68,7 @@ export default function OurStoryTimeline({ onSelectPhoto }) {
                       <img
                         src={photo.src}
                         alt={photo.caption}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 pointer-events-none"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none'
                           e.currentTarget.nextElementSibling.style.display = 'flex'
@@ -74,8 +91,8 @@ export default function OurStoryTimeline({ onSelectPhoto }) {
                   </p>
                 </div>
 
-                {/* Minimal subtitle under card */}
-                <p className="font-serif italic text-base sm:text-lg text-[#faf4ea]/80 text-center mt-4 max-w-[26ch]">
+                {/* Subtitle under card */}
+                <p className="font-serif italic text-base sm:text-lg text-[#faf4ea]/80 text-center mt-3 max-w-[26ch]">
                   {item.subtitle}
                 </p>
               </motion.div>

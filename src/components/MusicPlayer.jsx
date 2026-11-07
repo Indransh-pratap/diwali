@@ -1,9 +1,9 @@
-
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Volume2, VolumeX } from 'lucide-react'
-import { MUSIC_SRC } from '../data'
+import { MUSIC_SRC, MUSIC_START_TIME } from '../data'
+import { triggerHaptic } from '../utils/haptics'
 
-export default function MusicPlayer({ isStarted }) {
+export default function MusicPlayer({ isStarted = true }) {
   const [isPlaying, setIsPlaying] = useState(false)
 
   const audioRef = useRef(null)
@@ -11,27 +11,27 @@ export default function MusicPlayer({ isStarted }) {
 
   const wasPlayingRef = useRef(false)
   const hasStartedAudioRef = useRef(false)
+  const userMutedRef = useRef(false)
   const startingRef = useRef(false)
   const fadeIntervalRef = useRef(null)
 
-  // Music starting position: 1 minute 43 seconds (103 seconds)
-  const START_TIME = 103
+  const START_TIME = MUSIC_START_TIME || 103
   const TARGET_VOLUME = 0.55
 
   // Clear previous fade animation
-  const clearFade = () => {
+  const clearFade = useCallback(() => {
     if (fadeIntervalRef.current) {
       clearInterval(fadeIntervalRef.current)
       fadeIntervalRef.current = null
     }
-  }
+  }, [])
 
   // Smooth volume fade helper
-  const fadeVolume = (audio, target, duration, onEnd) => {
+  const fadeVolume = useCallback((audio, target, duration, onEnd) => {
     clearFade()
 
-    const stepTime = 50
-    const steps = duration / stepTime
+    const stepTime = 40
+    const steps = Math.max(1, duration / stepTime)
     const delta = (target - audio.volume) / steps
 
     fadeIntervalRef.current = setInterval(() => {
@@ -48,9 +48,47 @@ export default function MusicPlayer({ isStarted }) {
         audio.volume = Math.max(0, Math.min(1, nextVol))
       }
     }, stepTime)
-  }
+  }, [clearFade])
 
-  // Generated romantic ambient soundscape
+  // Seek to chorus start time (1:43 / 103s) safely
+  const seekToStartTime = useCallback((audio) => {
+    if (hasStartedAudioRef.current) return
+    try {
+      if (audio.duration && audio.duration > START_TIME) {
+        audio.currentTime = START_TIME
+        hasStartedAudioRef.current = true
+      } else if (audio.readyState >= 1) {
+        audio.currentTime = START_TIME
+        hasStartedAudioRef.current = true
+      }
+    } catch (err) {
+      console.warn('Seek deferred:', err)
+    }
+  }, [START_TIME])
+
+  // Setup metadata listener to ensure correct start time
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    const handleMetadata = () => {
+      seekToStartTime(audio)
+    }
+
+    audio.addEventListener('loadedmetadata', handleMetadata)
+    audio.addEventListener('canplay', handleMetadata)
+
+    if (audio.readyState >= 1) {
+      seekToStartTime(audio)
+    }
+
+    return () => {
+      audio.removeEventListener('loadedmetadata', handleMetadata)
+      audio.removeEventListener('canplay', handleMetadata)
+    }
+  }, [seekToStartTime])
+
+  // Generated romantic ambient fallback if MP3 fails
   const initGeneratedAmbient = () => {
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext
@@ -59,10 +97,9 @@ export default function MusicPlayer({ isStarted }) {
       const ctx = new AudioCtx()
 
       const master = ctx.createGain()
-      master.gain.setValueAtTime(0.001, ctx.currentTime)
+      master.gain.setValueAtTime(0.0001, ctx.currentTime)
       master.connect(ctx.destination)
 
-      // Soft drone chords
       const freqs = [130.81, 196.0, 261.63]
 
       freqs.forEach((f, i) => {
@@ -70,22 +107,21 @@ export default function MusicPlayer({ isStarted }) {
         osc.type = i === 1 ? 'sine' : 'triangle'
         osc.frequency.setValueAtTime(f, ctx.currentTime)
 
-        const flt = ctx.createBiquadFilter()
-        flt.type = 'lowpass'
-        flt.frequency.setValueAtTime(420, ctx.currentTime)
+        const filter = ctx.createBiquadFilter()
+        filter.type = 'lowpass'
+        filter.frequency.setValueAtTime(420, ctx.currentTime)
 
         const gain = ctx.createGain()
         gain.gain.setValueAtTime(0.05, ctx.currentTime)
 
-        osc.connect(flt)
-        flt.connect(gain)
+        osc.connect(filter)
+        filter.connect(gain)
         gain.connect(master)
 
         osc.start()
       })
 
-      // Gentle musical chimes
-      const scale = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25]
+      const scale = [261.63, 293.66, 329.63, 392, 440, 523.25]
 
       let chimeInterval = null
 
@@ -121,8 +157,10 @@ export default function MusicPlayer({ isStarted }) {
       }
 
       return {
-        play: () => {
-          if (ctx.state === 'suspended') ctx.resume()
+        play: async () => {
+          if (ctx.state === 'suspended') {
+            await ctx.resume()
+          }
 
           master.gain.cancelScheduledValues(ctx.currentTime)
           master.gain.setTargetAtTime(0.28, ctx.currentTime, 0.5)
@@ -146,92 +184,126 @@ export default function MusicPlayer({ isStarted }) {
     }
   }
 
-  // Wait until audio metadata is available
-  const waitForMetadata = (audio) => {
-    if (audio.readyState >= 1) {
-      return Promise.resolve()
-    }
+  // Main play function
+  const playMusic = useCallback(async () => {
+    if (startingRef.current || userMutedRef.current) return
 
-    return new Promise((resolve, reject) => {
-      audio.addEventListener('loadedmetadata', resolve, { once: true })
-      audio.addEventListener('error', reject, { once: true })
-      audio.load()
-    })
-  }
+    const audio = audioRef.current
+    if (!audio || !MUSIC_SRC) return
 
-  // Main music play function
-  const playMusic = async () => {
-    if (startingRef.current) return
+    if (!audio.paused && isPlaying) return
 
     startingRef.current = true
 
-    const audio = audioRef.current
-
     try {
-      if (audio && MUSIC_SRC) {
-        audio.volume = 0
+      seekToStartTime(audio)
 
-        // Load audio before seeking
-        await waitForMetadata(audio)
-
-        // Start from 1:43 only on the first play
-        if (!hasStartedAudioRef.current) {
-          if (audio.duration > START_TIME) {
-            audio.currentTime = START_TIME
-          } else {
-            console.warn(
-              'Audio is shorter than 1:43. Starting from the beginning.'
-            )
-            audio.currentTime = 0
-          }
-
-          hasStartedAudioRef.current = true
-        }
-
-        await audio.play()
-
-        setIsPlaying(true)
-
-        // Smooth cinematic fade-in
-        fadeVolume(audio, TARGET_VOLUME, 3000)
-
-      } else {
-        throw new Error('Music file not available')
+      // Start at gentle volume and quickly fade up so sound is heard immediately
+      if (!audio.volume || audio.volume < 0.2) {
+        audio.volume = 0.2
       }
+
+      const playPromise = audio.play()
+      if (playPromise !== undefined) {
+        await playPromise
+      }
+
+      // Stop fallback if real music plays
+      if (webAudioRef.current) {
+        webAudioRef.current.pause()
+      }
+
+      setIsPlaying(true)
+      userMutedRef.current = false
+      fadeVolume(audio, TARGET_VOLUME, 1200)
 
     } catch (error) {
-      console.warn('Audio playback fallback:', error)
-
-      if (!webAudioRef.current) {
-        webAudioRef.current = initGeneratedAmbient()
-      }
-
-      if (webAudioRef.current) {
-        webAudioRef.current.play()
-        setIsPlaying(true)
-      }
-
+      // Browser autoplay policy might block unmuted audio without a user gesture.
+      // This is expected and handled seamlessly by the global interaction listeners.
+      console.log('Autoplay deferred until user interaction:', error?.name || error)
     } finally {
       startingRef.current = false
     }
-  }
+  }, [fadeVolume, isPlaying, seekToStartTime])
 
-  // Start music on first website interaction
+  // 1. Attempt autoplay immediately when website opens
   useEffect(() => {
-    if (isStarted && !isPlaying) {
+    playMusic()
+  }, [playMusic])
+
+  // 2. Global first-interaction fallback (touch, click, scroll, keypress anywhere on screen)
+  useEffect(() => {
+    if (isPlaying) return
+
+    const handleUserInteraction = () => {
+      if (userMutedRef.current) return
+      const audio = audioRef.current
+      if (audio && audio.paused) {
+        playMusic()
+      }
+    }
+
+    const events = [
+      'pointerdown',
+      'touchstart',
+      'touchend',
+      'click',
+      'keydown',
+      'scroll',
+      'wheel'
+    ]
+
+    events.forEach((evt) => {
+      window.addEventListener(evt, handleUserInteraction, {
+        capture: true,
+        passive: true
+      })
+      document.addEventListener(evt, handleUserInteraction, {
+        capture: true,
+        passive: true
+      })
+    })
+
+    return () => {
+      events.forEach((evt) => {
+        window.removeEventListener(evt, handleUserInteraction, { capture: true })
+        document.removeEventListener(evt, handleUserInteraction, { capture: true })
+      })
+    }
+  }, [isPlaying, playMusic])
+
+  // 3. Listen for custom 'request-music-play' event (e.g. from Intro diya click)
+  useEffect(() => {
+    const handleRequest = () => {
+      if (!userMutedRef.current) {
+        playMusic()
+      }
+    }
+
+    window.addEventListener('request-music-play', handleRequest)
+    return () => {
+      window.removeEventListener('request-music-play', handleRequest)
+    }
+  }, [playMusic])
+
+  // 4. Watch isStarted prop (if intro was dismissed)
+  useEffect(() => {
+    if (isStarted && !isPlaying && !userMutedRef.current) {
       playMusic()
     }
-  }, [isStarted])
+  }, [isStarted, isPlaying, playMusic])
 
   // Toggle play / pause
-  const toggleMusic = () => {
+  const toggleMusic = async () => {
+    triggerHaptic(25)
     const audio = audioRef.current
 
     if (isPlaying) {
+      userMutedRef.current = true
       clearFade()
 
       if (audio && !audio.paused) {
-        fadeVolume(audio, 0, 500, () => {
+        fadeVolume(audio, 0, 400, () => {
           audio.pause()
           setIsPlaying(false)
         })
@@ -241,11 +313,23 @@ export default function MusicPlayer({ isStarted }) {
       }
 
     } else {
-      playMusic()
+      userMutedRef.current = false
+      if (audio) {
+        await playMusic()
+      } else {
+        if (!webAudioRef.current) {
+          webAudioRef.current = initGeneratedAmbient()
+        }
+
+        if (webAudioRef.current) {
+          await webAudioRef.current.play()
+          setIsPlaying(true)
+        }
+      }
     }
   }
 
-  // Handle browser tab visibility
+  // Handle browser tab visibility (pause when backgrounded, resume when active)
   useEffect(() => {
     const handleVisibility = () => {
       const audio = audioRef.current
@@ -253,7 +337,6 @@ export default function MusicPlayer({ isStarted }) {
       if (document.hidden) {
         if (isPlaying) {
           wasPlayingRef.current = true
-
           clearFade()
 
           if (audio && !audio.paused) {
@@ -267,7 +350,7 @@ export default function MusicPlayer({ isStarted }) {
           setIsPlaying(false)
         }
       } else {
-        if (wasPlayingRef.current) {
+        if (wasPlayingRef.current && !userMutedRef.current) {
           wasPlayingRef.current = false
           playMusic()
         }
@@ -282,7 +365,38 @@ export default function MusicPlayer({ isStarted }) {
         handleVisibility
       )
     }
-  }, [isPlaying])
+  }, [isPlaying, playMusic, clearFade])
+
+  // Handle unexpected audio ending/errors
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    const handlePause = () => {
+      if (audio.ended) {
+        setIsPlaying(false)
+      }
+    }
+
+    const handleError = () => {
+      // If absolute path failed, try relative path
+      if (audio.src && audio.src.endsWith('/assets/music/music.mp3')) {
+        audio.src = 'assets/music/music.mp3'
+        audio.load()
+        return
+      }
+      console.error('Music file failed to load')
+      setIsPlaying(false)
+    }
+
+    audio.addEventListener('ended', handlePause)
+    audio.addEventListener('error', handleError)
+
+    return () => {
+      audio.removeEventListener('ended', handlePause)
+      audio.removeEventListener('error', handleError)
+    }
+  }, [])
 
   // Cleanup on unmount
   useEffect(() => {
@@ -297,7 +411,7 @@ export default function MusicPlayer({ isStarted }) {
         webAudioRef.current.pause()
       }
     }
-  }, [])
+  }, [clearFade])
 
   return (
     <>
@@ -306,6 +420,8 @@ export default function MusicPlayer({ isStarted }) {
         src={MUSIC_SRC}
         loop
         preload="auto"
+        playsInline
+        autoPlay
       />
 
       <button
@@ -320,17 +436,18 @@ export default function MusicPlayer({ isStarted }) {
           fixed
           bottom-[calc(env(safe-area-inset-bottom,0px)+1.25rem)]
           right-4 sm:right-6
-          z-50
+          z-[60]
           flex items-center gap-2.5
           px-4 py-2.5
           rounded-full
-          bg-[#120726]/85
+          bg-[#120726]/90
           backdrop-blur-[14px]
-          border border-[#e6c887]/35
-          shadow-[0_10px_35px_rgba(0,0,0,0.65),0_0_20px_rgba(230,200,135,0.18)]
+          border border-[#e6c887]/40
+          shadow-[0_10px_35px_rgba(0,0,0,0.65),0_0_20px_rgba(230,200,135,0.22)]
           cursor-pointer
           min-h-[44px]
-          transition-transform
+          transition-all
+          duration-300
           hover:scale-105
           select-none
         "

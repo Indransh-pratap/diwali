@@ -1782,9 +1782,9 @@
       subtitleHighlight: "tumhari muskurahat",
 
       music: {
-        src: "music/song.mp3",
-        fallbackSrc: "assets/music/music.mp3",
-        fadeInDuration: 3000,
+        src: "assets/music/music.mp3",
+        fallbackSrc: "public/assets/music/music.mp3",
+        fadeInDuration: 2000,
         targetVolume: 0.6
       },
 
@@ -2020,6 +2020,19 @@
     }
 
     musicWidget.addEventListener('click', toggleMusic);
+
+    // Immediate autoplay attempt + first interaction fallback
+    function tryAutoplay() {
+      if (bgMusic.paused) {
+        startMusicFadeIn();
+      }
+    }
+    tryAutoplay();
+    ['pointerdown', 'touchstart', 'click', 'keydown', 'scroll'].forEach((evt) => {
+      window.addEventListener(evt, () => {
+        tryAutoplay();
+      }, { capture: true, once: true });
+    });
 
     // Auto-pause when tab is hidden, resume when visible
     let wasPlayingBeforeHidden = false;

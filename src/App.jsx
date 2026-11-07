@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import PetalsCanvas from './components/PetalsCanvas'
+import TouchSparkles from './components/TouchSparkles'
 import Intro from './components/Intro'
 import ChapterNav from './components/ChapterNav'
 import Hero from './components/Hero'
@@ -21,14 +22,18 @@ export default function App() {
   }, [opened])
 
   const handleOpen = () => {
+    window.dispatchEvent(new CustomEvent('request-music-play'))
     setOpened(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (
-    <div id="top" className="relative min-h-screen bg-[#080414] text-[#faf4ea] overflow-x-hidden">
+    <div id="top" className="relative min-h-screen bg-[#080414] text-[#faf4ea] overflow-x-hidden selection:bg-[#f5c26b]/30">
       {/* Floating Rose Petals & Golden Sparkles */}
       <PetalsCanvas />
+
+      {/* Interactive Mobile Touch & Tap Sparkler Trails */}
+      <TouchSparkles />
 
       {/* Atmospheric Ambient Pulse Layer */}
       <div className="ambient-glow-layer" aria-hidden="true" />
@@ -69,11 +74,11 @@ export default function App() {
             {/* 6. Final Surprise - The Emotional Highlight */}
             <Finale />
           </main>
-
-          {/* Floating Glass Music Player */}
-          <MusicPlayer isStarted={opened} />
         </>
       )}
+
+      {/* Floating Glass Music Player - Always mounted for background audio preloading */}
+      <MusicPlayer isStarted={opened} />
     </div>
   )
 }

@@ -1,13 +1,20 @@
 import { motion } from 'framer-motion'
 import { Sparkles } from 'lucide-react'
+import { triggerHaptic } from '../utils/haptics'
 
 export default function Intro({ onOpen }) {
+  const handleClick = (e) => {
+    triggerHaptic(45)
+    window.dispatchEvent(new CustomEvent('request-music-play'))
+    if (onOpen) onOpen(e)
+  }
+
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080414] overflow-hidden text-center cursor-pointer select-none"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080414] overflow-hidden text-center cursor-pointer select-none touch-manipulation"
       exit={{ opacity: 0, scale: 1.05, filter: 'blur(10px)' }}
-      transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-      onClick={onOpen}
+      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      onClick={handleClick}
       role="button"
       aria-label="Tap to light the diya and begin"
     >
@@ -16,8 +23,8 @@ export default function Intro({ onOpen }) {
       <motion.div
         initial={{ opacity: 0, scale: 0.92, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-        className="relative max-w-sm w-full rounded-3xl p-8 bg-[#120624]/80 backdrop-blur-xl border border-[#e6c887]/30 shadow-[0_25px_70px_rgba(0,0,0,0.85)] flex flex-col items-center"
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        className="relative max-w-sm w-full rounded-3xl p-6 sm:p-8 bg-[#120624]/85 backdrop-blur-2xl border border-[#e6c887]/35 shadow-[0_25px_70px_rgba(0,0,0,0.9),0_0_40px_rgba(230,200,135,0.18)] flex flex-col items-center active:scale-98 transition-transform"
       >
         {/* Large Glowing Clay Diya */}
         <div className="relative my-3">
@@ -66,7 +73,7 @@ export default function Intro({ onOpen }) {
           For Radha ❤️
         </h1>
 
-        <button className="btn-primary-luxury text-xs sm:text-sm mt-4 px-6 py-2.5">
+        <button className="btn-primary-luxury text-xs sm:text-sm mt-4 px-6 py-3 active:scale-95 touch-manipulation">
           <span>Tap to light the diya 🪔</span>
           <Sparkles size={15} />
         </button>
