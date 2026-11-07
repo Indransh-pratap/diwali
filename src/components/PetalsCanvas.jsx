@@ -17,8 +17,8 @@ export default function PetalsCanvas() {
     resize()
     window.addEventListener('resize', resize)
 
-    // Reduced by 80%: very subtle, minimal, elegant drift (5-8 petals total)
-    const count = window.innerWidth < 640 ? 5 : 8
+    // Reduced for ultra-smooth mobile performance: 3 on mobile, 6 on desktop
+    const count = window.innerWidth < 640 ? 3 : 6
     const petals = Array.from({ length: count }, () => createPetal(true))
 
     function createPetal(init = false) {

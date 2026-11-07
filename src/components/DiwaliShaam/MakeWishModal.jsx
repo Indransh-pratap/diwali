@@ -23,12 +23,12 @@ export default function MakeWishModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-xl animate-fade-in">
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        className="relative w-full max-w-lg rounded-3xl p-6 sm:p-8 bg-gradient-to-b from-[#18082c] via-[#140626] to-[#0c0318] border border-[#e6c887]/40 shadow-[0_25px_80px_rgba(0,0,0,0.95)] flex flex-col max-h-[90vh] overflow-y-auto no-scrollbar"
+        className="relative w-full max-w-lg rounded-2xl sm:rounded-3xl p-5 sm:p-8 bg-gradient-to-b from-[#18082c] via-[#140626] to-[#0c0318] border border-[#e6c887]/40 shadow-[0_25px_80px_rgba(0,0,0,0.95)] flex flex-col max-h-[90vh] overflow-y-auto no-scrollbar"
       >
         {/* Close Button */}
         <button
@@ -72,7 +72,7 @@ export default function MakeWishModal({
             onChange={(e) => setWishText(e.target.value)}
             placeholder="Write your heartfelt wish for us... (e.g. May our love stay as warm as this flame, forever.)"
             maxLength={220}
-            className="w-full px-4 py-3 rounded-2xl bg-[#120520] border border-[#e6c887]/35 text-xs sm:text-sm text-[#faf4ea] placeholder-[#e6c887]/40 focus:border-[#ffd700] focus:outline-none resize-none"
+            className="w-full px-4 py-3 rounded-2xl bg-[#120520] border border-[#e6c887]/35 text-base sm:text-sm text-[#faf4ea] placeholder-[#e6c887]/40 focus:border-[#ffd700] focus:outline-none resize-none"
           />
 
           <button

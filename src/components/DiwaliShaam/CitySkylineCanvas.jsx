@@ -7,50 +7,68 @@ export default function CitySkylineCanvas({
 }) {
   const canvasRef = useRef(null)
   const animFrameRef = useRef(null)
+  const isVisibleRef = useRef(false)
+  const bgCanvasRef = useRef(null)
+
   const stateRef = useRef({
     particles: [],
     rockets: [],
     anars: [],
-    chakris: [],
-    lanterns: [],
     cityBuildings: [],
     distantMountains: [],
     stars: [],
     skyFlashes: [],
     lastTime: 0,
     width: 0,
-    height: 0
+    height: 0,
+    dpr: 1
   })
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const ctx = canvas.getContext('2d')
+    const ctx = canvas.getContext('2d', { alpha: false })
     const state = stateRef.current
 
-    // Resize handler
+    // Offscreen Canvas for pre-rendering static skyline & mountains
+    if (!bgCanvasRef.current) {
+      bgCanvasRef.current = document.createElement('canvas')
+    }
+    const bgCanvas = bgCanvasRef.current
+    const bgCtx = bgCanvas.getContext('2d')
+
+    // Resize handler with mobile-optimized DPR
     const handleResize = () => {
       const rect = canvas.getBoundingClientRect()
-      const dpr = Math.min(window.devicePixelRatio || 1, 2)
+      const isMobile = window.innerWidth < 768
+      const dpr = isMobile ? 1 : Math.min(window.devicePixelRatio || 1, 2)
+      state.dpr = dpr
       state.width = rect.width
       state.height = rect.height
-      canvas.width = rect.width * dpr
-      canvas.height = rect.height * dpr
+
+      canvas.width = Math.floor(rect.width * dpr)
+      canvas.height = Math.floor(rect.height * dpr)
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
 
-      initBackground(state.width, state.height)
+      bgCanvas.width = canvas.width
+      bgCanvas.height = canvas.height
+      bgCtx.setTransform(dpr, 0, 0, dpr, 0, 0)
+
+      initBackground(state.width, state.height, isMobile)
+      prerenderStaticSkyline(state.width, state.height)
     }
 
-    const initBackground = (w, h) => {
-      // 1. Stars in the upper sky
+    const initBackground = (w, h, isMobile) => {
+      // 1. Stars in upper sky (reduced count on mobile)
       state.stars = []
-      const starCount = Math.floor(w * 0.12)
+      const starDensity = isMobile ? 0.06 : 0.11
+      const starCount = Math.floor(w * starDensity)
       for (let i = 0; i < starCount; i++) {
         state.stars.push({
           x: Math.random() * w,
-          y: Math.random() * (h * 0.55),
-          r: Math.random() * 1.2 + 0.4,
-          alpha: Math.random() * 0.7 + 0.3,
+          y: Math.random() * (h * 0.52),
+          r: Math.random() * 1.1 + 0.4,
+          alpha: Math.random() * 0.6 + 0.3,
           twinkleSpeed: Math.random() * 0.03 + 0.01,
           phase: Math.random() * Math.PI * 2
         })
@@ -60,16 +78,18 @@ export default function CitySkylineCanvas({
       state.distantMountains = []
       // Layer 1 (Far)
       const m1 = []
-      for (let x = 0; x <= w + 40; x += 35) {
-        const y = h * 0.52 + Math.sin(x * 0.003) * 35 + Math.cos(x * 0.008) * 20
+      const step1 = isMobile ? 45 : 35
+      for (let x = 0; x <= w + 45; x += step1) {
+        const y = h * 0.52 + Math.sin(x * 0.003) * 32 + Math.cos(x * 0.008) * 18
         m1.push({ x, y })
       }
       state.distantMountains.push({ points: m1, color: '#0d061c', alpha: 0.9 })
 
       // Layer 2 (Mid-distance)
       const m2 = []
-      for (let x = 0; x <= w + 40; x += 30) {
-        const y = h * 0.58 + Math.sin(x * 0.005 + 1) * 30 + Math.sin(x * 0.012) * 15
+      const step2 = isMobile ? 40 : 30
+      for (let x = 0; x <= w + 40; x += step2) {
+        const y = h * 0.58 + Math.sin(x * 0.005 + 1) * 28 + Math.sin(x * 0.012) * 14
         m2.push({ x, y })
       }
       state.distantMountains.push({ points: m2, color: '#130826', alpha: 1 })
@@ -80,8 +100,8 @@ export default function CitySkylineCanvas({
       const horizonY = h * 0.65
 
       while (curX < w) {
-        const bw = Math.floor(Math.random() * 32 + 20)
-        const bh = Math.floor(Math.random() * 85 + 40)
+        const bw = Math.floor(Math.random() * 30 + (isMobile ? 24 : 20))
+        const bh = Math.floor(Math.random() * (isMobile ? 65 : 85) + 38)
         const by = horizonY - bh
 
         // Window grid
@@ -95,15 +115,13 @@ export default function CitySkylineCanvas({
               windows.push({
                 x: curX + c * 7,
                 y: by + r * 9,
-                color: Math.random() < 0.4 ? '#ffe79a' : Math.random() < 0.7 ? '#ffc857' : '#ffd700',
-                glow: Math.random() < 0.2
+                color: Math.random() < 0.4 ? '#ffe79a' : Math.random() < 0.7 ? '#ffc857' : '#ffd700'
               })
             }
           }
         }
 
-        // Rooftop Diya or Ladi (string lights)
-        const hasDiya = Math.random() < 0.45
+        const hasDiya = Math.random() < 0.4
         const hasAnar = Math.random() < 0.12
         const isTemple = Math.random() < 0.08
 
@@ -116,30 +134,88 @@ export default function CitySkylineCanvas({
           hasDiya,
           hasAnar,
           isTemple,
-          shikharHeight: isTemple ? Math.floor(Math.random() * 25 + 15) : 0
+          shikharHeight: isTemple ? Math.floor(Math.random() * 22 + 12) : 0
         })
 
         curX += bw + Math.floor(Math.random() * 4)
       }
     }
 
+    // Pre-render static elements (mountains + haze + buildings + windows) onto offscreen canvas
+    const prerenderStaticSkyline = (w, h) => {
+      bgCtx.clearRect(0, 0, w, h)
+
+      // 1. Distant Mountains
+      state.distantMountains.forEach((m) => {
+        bgCtx.save()
+        bgCtx.fillStyle = m.color
+        bgCtx.globalAlpha = m.alpha
+        bgCtx.beginPath()
+        bgCtx.moveTo(0, h)
+        m.points.forEach((p, idx) => {
+          if (idx === 0) bgCtx.lineTo(p.x, p.y)
+          else bgCtx.lineTo(p.x, p.y)
+        })
+        bgCtx.lineTo(w, h)
+        bgCtx.closePath()
+        bgCtx.fill()
+        bgCtx.restore()
+      })
+
+      // 2. City Atmospheric Warm Haze
+      const cityHaze = bgCtx.createLinearGradient(0, h * 0.5, 0, h * 0.68)
+      cityHaze.addColorStop(0, 'rgba(255, 180, 50, 0)')
+      cityHaze.addColorStop(1, 'rgba(255, 170, 40, 0.16)')
+      bgCtx.fillStyle = cityHaze
+      bgCtx.fillRect(0, h * 0.5, w, h * 0.2)
+
+      // 3. City Buildings & Windows
+      state.cityBuildings.forEach((b) => {
+        bgCtx.fillStyle = '#0f051c'
+        bgCtx.fillRect(b.x, b.y, b.w, b.h + 20)
+
+        // Temple Shikhar
+        if (b.isTemple) {
+          bgCtx.beginPath()
+          bgCtx.moveTo(b.x + b.w * 0.5, b.y - b.shikharHeight)
+          bgCtx.lineTo(b.x, b.y)
+          bgCtx.lineTo(b.x + b.w, b.y)
+          bgCtx.closePath()
+          bgCtx.fillStyle = '#16082b'
+          bgCtx.fill()
+
+          // Golden Kalash pin
+          bgCtx.fillStyle = '#ffd700'
+          bgCtx.beginPath()
+          bgCtx.arc(b.x + b.w * 0.5, b.y - b.shikharHeight, 2, 0, Math.PI * 2)
+          bgCtx.fill()
+        }
+
+        // Windows (all drawn once into cache)
+        b.windows.forEach((win) => {
+          bgCtx.fillStyle = win.color
+          bgCtx.fillRect(win.x, win.y, 4, 5)
+        })
+      })
+    }
+
     handleResize()
     window.addEventListener('resize', handleResize)
 
-    // Firework Color Palettes
+    // Firework Palettes
     const PALETTES = [
-      ['#ffd700', '#ffb703', '#ffffff', '#fb8500'], // Golden Luxury
-      ['#ff4d8d', '#f72585', '#ffd700', '#ffffff'], // Romantic Pink & Gold
-      ['#7209b7', '#b5179e', '#f72585', '#4cc9f0'], // Mystic Purple & Rose
-      ['#06d6a0', '#118ab2', '#ffd166', '#ffffff'], // Emerald Sparkle
-      ['#ff0055', '#ff5400', '#ffbd00', '#ffffff']  // Sunset Flame
+      ['#ffd700', '#ffb703', '#ffffff', '#fb8500'],
+      ['#ff4d8d', '#f72585', '#ffd700', '#ffffff'],
+      ['#a855f7', '#ec4899', '#f59e0b', '#ffffff'],
+      ['#06d6a0', '#118ab2', '#ffd166', '#ffffff'],
+      ['#ff0055', '#ff5400', '#ffbd00', '#ffffff']
     ]
 
-    // Spawn a rocket from the city
     const launchRocket = (targetX = null, targetY = null, type = 'normal') => {
+      const isMobile = state.width < 640
       const startX = targetX !== null ? targetX : Math.random() * (state.width * 0.75) + state.width * 0.12
       const startY = state.height * 0.64
-      const destY = targetY !== null ? targetY : Math.random() * (state.height * 0.38) + state.height * 0.08
+      const destY = targetY !== null ? targetY : Math.random() * (state.height * 0.36) + state.height * 0.08
       const palette = PALETTES[Math.floor(Math.random() * PALETTES.length)]
 
       state.rockets.push({
@@ -147,32 +223,31 @@ export default function CitySkylineCanvas({
         y: startY,
         startX,
         destY,
-        vx: (Math.random() - 0.5) * 0.8,
-        vy: -(Math.random() * 3 + 6.5),
+        vx: (Math.random() - 0.5) * 0.6,
+        vy: -(Math.random() * 2.5 + (isMobile ? 5.5 : 6.5)),
         palette,
-        type, // 'normal' | 'heart' | 'chrysanthemum'
+        type,
         trail: []
       })
     }
 
-    // Explode a rocket into particles
     const explodeRocket = (rocket) => {
-      const count = rocket.type === 'heart' ? 75 : 65
+      const isMobile = state.width < 640
+      const count = rocket.type === 'heart' ? (isMobile ? 36 : 65) : (isMobile ? 28 : 55)
       const palette = rocket.palette
 
-      // Trigger Sky Ambient Flash
+      // Sky Ambient Flash
       state.skyFlashes.push({
         x: rocket.x,
         y: rocket.y,
         color: palette[0],
-        alpha: 0.35,
-        radius: Math.random() * 120 + 90
+        alpha: 0.3,
+        radius: isMobile ? 80 : 120
       })
 
       if (onFireworkExplode) onFireworkExplode(rocket.type)
 
       if (rocket.type === 'heart') {
-        // Parametric Heart Formula
         for (let i = 0; i < count; i++) {
           const t = (Math.PI * 2 * i) / count
           const hx = 16 * Math.pow(Math.sin(t), 3)
@@ -181,20 +256,19 @@ export default function CitySkylineCanvas({
           state.particles.push({
             x: rocket.x,
             y: rocket.y,
-            vx: hx * 0.22 + (Math.random() - 0.5) * 0.3,
-            vy: hy * 0.22 + (Math.random() - 0.5) * 0.3,
+            vx: hx * (isMobile ? 0.18 : 0.22) + (Math.random() - 0.5) * 0.2,
+            vy: hy * (isMobile ? 0.18 : 0.22) + (Math.random() - 0.5) * 0.2,
             color: Math.random() < 0.6 ? '#ff4d8d' : '#ffd700',
             alpha: 1,
-            decay: Math.random() * 0.012 + 0.012,
-            size: Math.random() * 2.5 + 1.5,
-            gravity: 0.03
+            decay: Math.random() * 0.014 + 0.012,
+            size: isMobile ? 2 : 2.5,
+            gravity: 0.025
           })
         }
       } else {
-        // Classic spherical burst
         for (let i = 0; i < count; i++) {
           const angle = Math.random() * Math.PI * 2
-          const speed = Math.random() * 3.5 + 1.2
+          const speed = Math.random() * (isMobile ? 2.8 : 3.5) + 1.0
           state.particles.push({
             x: rocket.x,
             y: rocket.y,
@@ -202,36 +276,41 @@ export default function CitySkylineCanvas({
             vy: Math.sin(angle) * speed,
             color: palette[Math.floor(Math.random() * palette.length)],
             alpha: 1,
-            decay: Math.random() * 0.014 + 0.01,
-            size: Math.random() * 2.8 + 1.2,
-            gravity: 0.04
+            decay: Math.random() * 0.016 + 0.012,
+            size: isMobile ? 1.8 : 2.4,
+            gravity: 0.035
           })
         }
       }
     }
 
-    // Spawn an Anar fountain from rooftop
     const launchAnar = (x, y) => {
-      for (let i = 0; i < 18; i++) {
+      const isMobile = state.width < 640
+      const count = isMobile ? 8 : 15
+      for (let i = 0; i < count; i++) {
         state.anars.push({
-          x: x + (Math.random() - 0.5) * 4,
+          x: x + (Math.random() - 0.5) * 3,
           y,
-          vx: (Math.random() - 0.5) * 1.8,
-          vy: -(Math.random() * 3.5 + 2.5),
+          vx: (Math.random() - 0.5) * 1.5,
+          vy: -(Math.random() * 3 + 2.2),
           alpha: 1,
-          decay: Math.random() * 0.04 + 0.02,
+          decay: Math.random() * 0.045 + 0.025,
           color: Math.random() < 0.8 ? '#ffd700' : '#ffffff',
-          size: Math.random() * 2 + 1
+          size: Math.random() * 1.8 + 1
         })
       }
     }
 
-    // Periodic organic spawners
     let rocketTimer = 0
     let anarTimer = 0
 
-    // Main 60fps Animation Loop
+    // Animation Loop with zero-shadowBlur high-speed rendering
     const render = (time) => {
+      if (!isVisibleRef.current || document.hidden) {
+        animFrameRef.current = requestAnimationFrame(render)
+        return
+      }
+
       const dt = Math.min((time - state.lastTime) / 1000, 0.1) || 0.016
       state.lastTime = time
       const w = state.width
@@ -256,10 +335,10 @@ export default function CitySkylineCanvas({
         ctx.fill()
       })
 
-      // 3. Sky Flashes (from large firework detonations)
+      // 3. Sky Flashes (from explosions)
       for (let i = state.skyFlashes.length - 1; i >= 0; i--) {
         const f = state.skyFlashes[i]
-        f.alpha -= dt * 1.2
+        f.alpha -= dt * 1.3
         if (f.alpha <= 0) {
           state.skyFlashes.splice(i, 1)
           continue
@@ -268,71 +347,23 @@ export default function CitySkylineCanvas({
         const grad = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.radius)
         grad.addColorStop(0, f.color)
         grad.addColorStop(1, 'transparent')
-        ctx.save()
-        ctx.globalAlpha = f.alpha * 0.4
+        ctx.globalAlpha = f.alpha * 0.35
         ctx.fillStyle = grad
         ctx.beginPath()
         ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2)
         ctx.fill()
-        ctx.restore()
+      }
+      ctx.globalAlpha = 1
+
+      // 4. Blit Pre-rendered Static Mountains & City Buildings
+      if (bgCanvas) {
+        ctx.drawImage(bgCanvas, 0, 0, w, h)
       }
 
-      // 4. Distant Mountains
-      state.distantMountains.forEach((m) => {
-        ctx.save()
-        ctx.fillStyle = m.color
-        ctx.globalAlpha = m.alpha
-        ctx.beginPath()
-        ctx.moveTo(0, h)
-        m.points.forEach((p, idx) => {
-          if (idx === 0) ctx.lineTo(p.x, p.y)
-          else ctx.lineTo(p.x, p.y)
-        })
-        ctx.lineTo(w, h)
-        ctx.closePath()
-        ctx.fill()
-        ctx.restore()
-      })
-
-      // 5. City Atmospheric Warm Haze / Glow
-      const cityHaze = ctx.createLinearGradient(0, h * 0.5, 0, h * 0.68)
-      cityHaze.addColorStop(0, 'rgba(255, 180, 50, 0)')
-      cityHaze.addColorStop(1, 'rgba(255, 170, 40, 0.18)')
-      ctx.fillStyle = cityHaze
-      ctx.fillRect(0, h * 0.5, w, h * 0.2)
-
-      // 6. City Buildings & Windows
+      // 5. Rooftop Diyas Flickering (dynamic flame top)
       state.cityBuildings.forEach((b) => {
-        // Building Base Silhouette
-        ctx.fillStyle = '#0f051c'
-        ctx.fillRect(b.x, b.y, b.w, b.h + 20)
-
-        // Temple Shikhar / Dome
-        if (b.isTemple) {
-          ctx.beginPath()
-          ctx.moveTo(b.x + b.w * 0.5, b.y - b.shikharHeight)
-          ctx.lineTo(b.x, b.y)
-          ctx.lineTo(b.x + b.w, b.y)
-          ctx.closePath()
-          ctx.fillStyle = '#16082b'
-          ctx.fill()
-
-          // Golden Kalash pin at temple tip
-          ctx.fillStyle = '#ffd700'
-          ctx.beginPath()
-          ctx.arc(b.x + b.w * 0.5, b.y - b.shikharHeight, 2, 0, Math.PI * 2)
-          ctx.fill()
-        }
-
-        // Windows
-        b.windows.forEach((win) => {
-          ctx.fillStyle = win.color
-          ctx.fillRect(win.x, win.y, 4, 5)
-        })
-
-        // Rooftop Diya
         if (b.hasDiya) {
-          const flameA = 0.7 + Math.sin(time * 0.008 + b.x) * 0.3
+          const flameA = 0.65 + Math.sin(time * 0.008 + b.x) * 0.35
           ctx.fillStyle = `rgba(255, 180, 50, ${flameA})`
           ctx.beginPath()
           ctx.arc(b.x + b.w * 0.5, b.y - 1, 1.5, 0, Math.PI * 2)
@@ -340,16 +371,15 @@ export default function CitySkylineCanvas({
         }
       })
 
-      // 7. Rockets Animation
+      // 6. Rockets Animation
       for (let i = state.rockets.length - 1; i >= 0; i--) {
         const r = state.rockets[i]
         r.x += r.vx
         r.y += r.vy
-        r.vy += 0.05 // slight drag
+        r.vy += 0.04
 
-        // Rocket Trail
-        r.trail.push({ x: r.x, y: r.y, alpha: 1 })
-        if (r.trail.length > 8) r.trail.shift()
+        r.trail.push({ x: r.x, y: r.y })
+        if (r.trail.length > 5) r.trail.shift()
 
         ctx.strokeStyle = '#ffd700'
         ctx.lineWidth = 1.5
@@ -360,10 +390,9 @@ export default function CitySkylineCanvas({
         })
         ctx.stroke()
 
-        // Rocket spark head
         ctx.fillStyle = '#ffffff'
         ctx.beginPath()
-        ctx.arc(r.x, r.y, 1.8, 0, Math.PI * 2)
+        ctx.arc(r.x, r.y, 1.5, 0, Math.PI * 2)
         ctx.fill()
 
         if (r.y <= r.destY || r.vy >= -1) {
@@ -372,7 +401,7 @@ export default function CitySkylineCanvas({
         }
       }
 
-      // 8. Firework Particles
+      // 7. Firework Particles (High performance two-pass glow, no shadowBlur)
       for (let i = state.particles.length - 1; i >= 0; i--) {
         const p = state.particles[i]
         p.x += p.vx
@@ -387,23 +416,28 @@ export default function CitySkylineCanvas({
           continue
         }
 
-        ctx.save()
-        ctx.globalAlpha = p.alpha
+        // Soft Outer Halo
+        ctx.globalAlpha = p.alpha * 0.35
         ctx.fillStyle = p.color
-        ctx.shadowColor = p.color
-        ctx.shadowBlur = 6
         ctx.beginPath()
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
+        ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2)
         ctx.fill()
-        ctx.restore()
-      }
 
-      // 9. Anar Fountain Sparks
+        // Brilliant Center Core
+        ctx.globalAlpha = p.alpha
+        ctx.fillStyle = '#ffffff'
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, p.size * 0.65, 0, Math.PI * 2)
+        ctx.fill()
+      }
+      ctx.globalAlpha = 1
+
+      // 8. Anar Fountain Sparks (High speed alpha particles)
       for (let i = state.anars.length - 1; i >= 0; i--) {
         const a = state.anars[i]
         a.x += a.vx
         a.y += a.vy
-        a.vy += 0.12 // gravity
+        a.vy += 0.12
         a.alpha -= a.decay
 
         if (a.alpha <= 0) {
@@ -411,35 +445,30 @@ export default function CitySkylineCanvas({
           continue
         }
 
-        ctx.save()
         ctx.globalAlpha = a.alpha
         ctx.fillStyle = a.color
-        ctx.shadowColor = a.color
-        ctx.shadowBlur = 4
         ctx.beginPath()
         ctx.arc(a.x, a.y, a.size, 0, Math.PI * 2)
         ctx.fill()
-        ctx.restore()
       }
+      ctx.globalAlpha = 1
 
-      // 10. Sky Lanterns (Wishes Rising)
+      // 9. Sky Lanterns (Wishes Rising)
       activeWishes.forEach((wObj, idx) => {
         const lX = ((idx * 67 + 25) % (w * 0.7)) + w * 0.15
-        const lY = Math.max(h * 0.08, h * 0.5 - (time * 0.018 + idx * 80) % (h * 0.45))
-        const sway = Math.sin(time * 0.002 + idx) * 8
+        const lY = Math.max(h * 0.08, h * 0.5 - (time * 0.016 + idx * 80) % (h * 0.45))
+        const sway = Math.sin(time * 0.002 + idx) * 7
 
-        // Lantern Warm Glow
-        const lGrad = ctx.createRadialGradient(lX + sway, lY, 2, lX + sway, lY, 16)
+        const lGrad = ctx.createRadialGradient(lX + sway, lY, 2, lX + sway, lY, 15)
         lGrad.addColorStop(0, 'rgba(255, 215, 0, 0.95)')
-        lGrad.addColorStop(0.5, 'rgba(255, 140, 0, 0.6)')
+        lGrad.addColorStop(0.5, 'rgba(255, 140, 0, 0.5)')
         lGrad.addColorStop(1, 'rgba(255, 69, 0, 0)')
 
         ctx.fillStyle = lGrad
         ctx.beginPath()
-        ctx.arc(lX + sway, lY, 16, 0, Math.PI * 2)
+        ctx.arc(lX + sway, lY, 15, 0, Math.PI * 2)
         ctx.fill()
 
-        // Paper Lantern Rect
         ctx.fillStyle = '#ffb703'
         ctx.fillRect(lX + sway - 5, lY - 6, 10, 12)
         ctx.fillStyle = '#fff3b0'
@@ -447,15 +476,16 @@ export default function CitySkylineCanvas({
       })
 
       // Spawner timers
+      const isMobile = w < 640
       rocketTimer += dt
-      if (rocketTimer > 2.8) {
+      if (rocketTimer > (isMobile ? 3.4 : 2.8)) {
         rocketTimer = 0
         const isHeart = Math.random() < 0.28
         launchRocket(null, null, isHeart ? 'heart' : 'normal')
       }
 
       anarTimer += dt
-      if (anarTimer > 1.6) {
+      if (anarTimer > (isMobile ? 2.2 : 1.6)) {
         anarTimer = 0
         const b = state.cityBuildings.find((item) => item.hasAnar)
         if (b) launchAnar(b.x + b.w * 0.5, b.y)
@@ -464,9 +494,22 @@ export default function CitySkylineCanvas({
       animFrameRef.current = requestAnimationFrame(render)
     }
 
+    // IntersectionObserver: Only render when section is visible in viewport
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisibleRef.current = entry.isIntersecting
+        if (entry.isIntersecting && !animFrameRef.current) {
+          animFrameRef.current = requestAnimationFrame(render)
+        }
+      },
+      { threshold: 0.05 }
+    )
+    observer.observe(canvas)
+
     animFrameRef.current = requestAnimationFrame(render)
 
     return () => {
+      observer.disconnect()
       window.removeEventListener('resize', handleResize)
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
     }
@@ -478,14 +521,13 @@ export default function CitySkylineCanvas({
     const state = stateRef.current
     if (!state.width) return
 
-    // Launch massive centered heart rocket
     state.rockets.push({
       x: state.width * 0.5,
       y: state.height * 0.65,
       startX: state.width * 0.5,
       destY: state.height * 0.18,
       vx: 0,
-      vy: -8.5,
+      vy: -(state.width < 640 ? 7 : 8.5),
       palette: ['#ff4d8d', '#ffd700', '#ffffff'],
       type: 'heart',
       trail: []

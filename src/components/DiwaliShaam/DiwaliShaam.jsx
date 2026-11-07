@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Volume2, VolumeX, Sparkles, Users, Heart, Share2, Copy, Check } from 'lucide-react'
+import { Volume2, VolumeX, Sparkles, Users, Copy, Check } from 'lucide-react'
 import CitySkylineCanvas from './CitySkylineCanvas'
 import MountainForeground from './MountainForeground'
 import RomanticActivitiesBar from './RomanticActivitiesBar'
@@ -74,7 +74,7 @@ export default function DiwaliShaam() {
   return (
     <section
       id="shaam"
-      className="relative w-full min-h-screen py-16 sm:py-24 px-3 sm:px-6 flex flex-col items-center justify-between overflow-hidden bg-[#06020f] select-none"
+      className="relative w-full min-h-screen py-10 sm:py-20 px-2 sm:px-6 flex flex-col items-center justify-between overflow-hidden bg-[#06020f] select-none"
     >
       {/* 1. Cinematic City Skyline Canvas with Layered Fireworks & Sky Lanterns */}
       <CitySkylineCanvas
@@ -83,7 +83,7 @@ export default function DiwaliShaam() {
       />
 
       {/* 2. Top Header Bar: Ambient Audio Toggle & Room Invitation Status */}
-      <div className="relative z-30 w-full max-w-5xl flex items-center justify-between mb-4 px-2">
+      <div className="relative z-30 w-full max-w-5xl flex items-center justify-between mb-3 px-2 flex-wrap gap-2">
         {/* Private Room Status Badge */}
         {roomCode ? (
           <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#140728]/85 backdrop-blur-md border border-[#e6c887]/30 text-[11px] text-[#f5e4be] shadow-lg">
@@ -102,10 +102,10 @@ export default function DiwaliShaam() {
           <button
             type="button"
             onClick={() => setShowConnectModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#f29bb2]/15 hover:bg-[#f29bb2]/25 border border-[#f29bb2]/35 text-[#f29bb2] text-xs font-semibold tracking-wide transition shadow-lg active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#f29bb2]/15 hover:bg-[#f29bb2]/25 border border-[#f29bb2]/35 text-[#f29bb2] text-[11px] sm:text-xs font-semibold tracking-wide transition shadow-lg active:scale-95"
           >
-            <Users size={13} />
-            <span>Invite Radha to this little evening ❤️</span>
+            <Users size={12} />
+            <span>Invite Radha to this evening ❤️</span>
           </button>
         )}
 
@@ -113,38 +113,36 @@ export default function DiwaliShaam() {
         <button
           type="button"
           onClick={handleToggleAmbientAudio}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-md border transition shadow-lg active:scale-95 text-xs ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-md border transition shadow-lg active:scale-95 text-[11px] sm:text-xs ${
             ambientAudioOn
               ? 'bg-[#ffd700]/20 border-[#ffd700]/40 text-[#ffd700]'
               : 'bg-[#140728]/80 border-[#e6c887]/25 text-[#e6c887]/70 hover:text-white'
           }`}
           title={ambientAudioOn ? 'Mute Mountain Ambience' : 'Listen to Mountain Breeze & City Fireworks'}
         >
-          {ambientAudioOn ? <Volume2 size={14} /> : <VolumeX size={14} />}
-          <span className="hidden sm:inline">
-            {ambientAudioOn ? 'Mountain Breeze On' : 'Play Shaam Ambience'}
-          </span>
+          {ambientAudioOn ? <Volume2 size={13} /> : <VolumeX size={13} />}
+          <span>{ambientAudioOn ? 'Ambience On' : 'Play Ambience'}</span>
         </button>
       </div>
 
       {/* 3. Section Title & Poetic Typography */}
-      <div className="relative z-30 text-center max-w-2xl mx-auto my-2 px-4">
-        <span className="inline-flex items-center gap-1.5 px-4 py-1 rounded-full bg-[#ffd700]/15 border border-[#ffd700]/30 text-[#ffd700] text-[11px] sm:text-xs font-semibold tracking-widest uppercase mb-2">
-          <Sparkles size={13} /> The Diwali Shaam ✨
+      <div className="relative z-30 text-center max-w-2xl mx-auto my-1 px-3">
+        <span className="inline-flex items-center gap-1.5 px-3.5 py-0.5 rounded-full bg-[#ffd700]/15 border border-[#ffd700]/30 text-[#ffd700] text-[10px] sm:text-xs font-semibold tracking-widest uppercase mb-1.5">
+          <Sparkles size={12} /> The Diwali Shaam ✨
         </span>
 
-        <h2 className="font-script gold-text-luxury text-4xl xs:text-5xl sm:text-6xl md:text-7xl my-1 leading-tight drop-shadow-[0_4px_25px_rgba(255,215,0,0.35)]">
+        <h2 className="font-script gold-text-luxury text-3xl xs:text-4xl sm:text-6xl md:text-7xl my-0.5 leading-tight drop-shadow-[0_4px_25px_rgba(255,215,0,0.35)]">
           The Diwali Shaam
         </h2>
 
         {/* Main Quote */}
-        <p className="font-serif italic text-base sm:text-xl md:text-2xl text-[#faf4ea] my-2 leading-relaxed drop-shadow">
+        <p className="font-serif italic text-sm xs:text-base sm:text-xl text-[#faf4ea] my-1.5 leading-relaxed drop-shadow">
           “Tu, main, ye thandi hawa...<br className="hidden xs:inline" />
           aur saamne jagmagati ek poori duniya.”
         </p>
 
-        {/* Tagline & Subtitle */}
-        <p className="text-xs sm:text-sm text-[#e6c887]/85 max-w-lg mx-auto font-sans leading-normal">
+        {/* Tagline */}
+        <p className="text-[11px] sm:text-sm text-[#e6c887]/85 max-w-lg mx-auto font-sans leading-normal">
           Somewhere between a million lights, I found my favourite place — beside you.
         </p>
       </div>
@@ -158,28 +156,15 @@ export default function DiwaliShaam() {
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             className="fixed top-20 inset-x-4 z-50 flex justify-center pointer-events-none"
           >
-            <div className="px-5 py-2.5 rounded-2xl bg-[#18082c]/95 backdrop-blur-xl border border-[#ffd700]/60 shadow-[0_10px_35px_rgba(255,215,0,0.4)] text-center text-xs sm:text-sm font-semibold text-[#f5e4be]">
+            <div className="px-5 py-2 rounded-2xl bg-[#18082c]/95 backdrop-blur-xl border border-[#ffd700]/60 shadow-[0_10px_35px_rgba(255,215,0,0.4)] text-center text-xs sm:text-sm font-semibold text-[#f5e4be]">
               {bannerToast}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* 5. Middle Space: Interactive Conversation Panel */}
-      <div className="relative z-25 w-full flex flex-col items-center my-4 px-2">
-        <ShaamChat
-          messages={messages}
-          myRole={myRole}
-          partnerTyping={partnerTyping}
-          isConnected={isConnected}
-          onSendMessage={sendMessage}
-          onSendTyping={sendTyping}
-          onSendReaction={sendReaction}
-        />
-      </div>
-
-      {/* 6. Romantic Activities Floating Bar */}
-      <div className="relative z-25 w-full mt-2 mb-36 sm:mb-48 md:mb-52">
+      {/* 5. Romantic Activities Bar (Placed right above the couple for instant visual feedback) */}
+      <div className="relative z-30 w-full mt-2 mb-1">
         <RomanticActivitiesBar
           handsHeld={handsHeld}
           myRole={myRole}
@@ -191,12 +176,25 @@ export default function DiwaliShaam() {
         />
       </div>
 
-      {/* 7. Scenic Mountain Hill Foreground: Couple Sitting Looking at City */}
+      {/* 6. Scenic Mountain Hill Foreground: Couple Sitting Looking at City Lights */}
       <MountainForeground
         handsHeld={handsHeld}
         isChaiShared={isChaiShared}
         heartEvent={heartEvent}
       />
+
+      {/* 7. Collapsible Private Conversation Panel Under The Stars */}
+      <div className="relative z-30 w-full flex flex-col items-center mt-2 mb-4 px-2">
+        <ShaamChat
+          messages={messages}
+          myRole={myRole}
+          partnerTyping={partnerTyping}
+          isConnected={isConnected}
+          onSendMessage={sendMessage}
+          onSendTyping={sendTyping}
+          onSendReaction={sendReaction}
+        />
+      </div>
 
       {/* 8. Make a Wish Modal (Sky Lantern) */}
       <MakeWishModal
@@ -213,27 +211,27 @@ export default function DiwaliShaam() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl"
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-xl"
           >
             <motion.div
               initial={{ scale: 0.9, y: 15 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 15 }}
-              className="relative max-w-md w-full bg-[#18082c] p-6 rounded-3xl border border-[#e6c887]/40 shadow-2xl flex flex-col items-center text-center"
+              className="relative max-w-md w-full bg-[#18082c] p-5 sm:p-6 rounded-3xl border border-[#e6c887]/40 shadow-2xl flex flex-col items-center text-center"
             >
-              <h4 className="font-script gold-text-luxury text-3xl mb-1">
+              <h4 className="font-script gold-text-luxury text-2xl sm:text-3xl mb-1">
                 A Private Evening Together ❤️
               </h4>
-              <p className="text-xs text-[#faf4ea]/85 mb-5 font-serif italic">
+              <p className="text-xs text-[#faf4ea]/85 mb-4 font-serif italic">
                 “Connect two devices to chat in real time, hold hands and make wishes under the stars.”
               </p>
 
               {/* Create Room Buttons */}
-              <div className="grid grid-cols-2 gap-3 w-full mb-4">
+              <div className="grid grid-cols-2 gap-2.5 w-full mb-3">
                 <button
                   type="button"
                   onClick={() => handleCreateRoom('indransh')}
-                  className="btn-primary-luxury text-xs px-3 py-3 w-full justify-center flex flex-col items-center gap-1"
+                  className="btn-primary-luxury text-xs px-2.5 py-2.5 w-full justify-center flex flex-col items-center gap-1"
                 >
                   <span className="font-bold">Play as Indransh</span>
                   <span className="text-[10px] opacity-75">Create Room</span>
@@ -242,7 +240,7 @@ export default function DiwaliShaam() {
                 <button
                   type="button"
                   onClick={() => handleCreateRoom('radha')}
-                  className="btn-secondary-luxury text-xs px-3 py-3 w-full justify-center flex flex-col items-center gap-1"
+                  className="btn-secondary-luxury text-xs px-2.5 py-2.5 w-full justify-center flex flex-col items-center gap-1"
                 >
                   <span className="font-bold">Play as Radha</span>
                   <span className="text-[10px] opacity-75">Create Room</span>
@@ -258,7 +256,7 @@ export default function DiwaliShaam() {
                   value={joinCodeInput}
                   onChange={(e) => setJoinCodeInput(e.target.value.toUpperCase())}
                   placeholder="ROOM CODE"
-                  className="w-full text-center font-mono tracking-widest uppercase px-3 py-2 rounded-xl bg-[#120520] border border-[#e6c887]/30 text-[#f5e4be] focus:border-[#ffd700] focus:outline-none text-sm"
+                  className="w-full text-center font-mono tracking-widest uppercase px-3 py-2 rounded-xl bg-[#120520] border border-[#e6c887]/35 text-[#f5e4be] focus:border-[#ffd700] focus:outline-none text-base sm:text-sm"
                 />
                 <button
                   type="submit"
@@ -271,7 +269,7 @@ export default function DiwaliShaam() {
               <button
                 type="button"
                 onClick={() => setShowConnectModal(false)}
-                className="text-xs text-[#e6c887]/60 hover:text-white mt-4 underline"
+                className="text-xs text-[#e6c887]/60 hover:text-white mt-3.5 underline"
               >
                 Close & Enjoy Solo
               </button>

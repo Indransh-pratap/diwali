@@ -18,16 +18,23 @@ export default function ChapterNav() {
   const [activeSection, setActiveSection] = useState('hero')
 
   useEffect(() => {
+    let ticking = false
     const handleScroll = () => {
-      const scrollPos = window.scrollY + window.innerHeight * 0.35
-      const sections = navItems.map((item) => document.getElementById(item.id)).filter(Boolean)
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const scrollPos = window.scrollY + window.innerHeight * 0.35
+          const sections = navItems.map((item) => document.getElementById(item.id)).filter(Boolean)
 
-      for (let i = sections.length - 1; i >= 0; i--) {
-        const sec = sections[i]
-        if (sec.offsetTop <= scrollPos) {
-          setActiveSection(sec.id)
-          break
-        }
+          for (let i = sections.length - 1; i >= 0; i--) {
+            const sec = sections[i]
+            if (sec.offsetTop <= scrollPos) {
+              setActiveSection(sec.id)
+              break
+            }
+          }
+          ticking = false
+        })
+        ticking = true
       }
     }
 

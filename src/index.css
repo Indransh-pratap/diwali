@@ -62,13 +62,14 @@ body {
   z-index: 2;
   background: radial-gradient(ellipse 80% 50% at 50% 95%, rgba(255, 154, 60, 0.22) 0%, rgba(245, 194, 107, 0.08) 40%, transparent 75%);
   mix-blend-mode: screen;
+  transform: translateZ(0);
   animation: ambientPulse 3.2s ease-in-out infinite alternate;
 }
 
 @keyframes ambientPulse {
-  0% { opacity: 0.55; transform: scale(0.99); }
-  50% { opacity: 0.85; transform: scale(1.01); }
-  100% { opacity: 0.6; transform: scale(0.995); }
+  0% { opacity: 0.55; transform: scale(0.99) translateZ(0); }
+  50% { opacity: 0.85; transform: scale(1.01) translateZ(0); }
+  100% { opacity: 0.6; transform: scale(0.995) translateZ(0); }
 }
 
 /* Fine Film Grain */
@@ -79,7 +80,43 @@ body {
   z-index: 3;
   opacity: 0.035;
   mix-blend-mode: overlay;
+  transform: translateZ(0);
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Mobile Performance Optimizations */
+@media (max-width: 768px) {
+  .ambient-glow-layer {
+    mix-blend-mode: normal !important;
+    opacity: 0.35 !important;
+    animation: none !important;
+  }
+  .film-grain {
+    display: none !important;
+  }
+}
+
+/* Mountain Fireflies (Jugnu) GPU animations */
+@keyframes jugnu1 {
+  0% { transform: translate3d(0, 0, 0) scale(0.8); opacity: 0.2; }
+  50% { transform: translate3d(24px, -18px, 0) scale(1.25); opacity: 0.95; }
+  100% { transform: translate3d(0, 0, 0) scale(0.8); opacity: 0.2; }
+}
+
+@keyframes jugnu2 {
+  0% { transform: translate3d(0, 0, 0) scale(1.1); opacity: 0.3; }
+  50% { transform: translate3d(-20px, 16px, 0) scale(0.75); opacity: 0.85; }
+  100% { transform: translate3d(0, 0, 0) scale(1.1); opacity: 0.3; }
+}
+
+.animate-jugnu-1 {
+  animation: jugnu1 ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+
+.animate-jugnu-2 {
+  animation: jugnu2 ease-in-out infinite alternate;
+  will-change: transform, opacity;
 }
 
 /* Luxury Gold Calligraphy Shimmer Text */
